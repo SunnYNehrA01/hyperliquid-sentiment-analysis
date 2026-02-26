@@ -1,16 +1,22 @@
-import pandas as pd
+from src.analysis_core import (
+    daily_regime_timeseries_impl,
+    merge_sentiment_impl,
+    segment_performance_impl,
+    sentiment_comparison_impl,
+)
+
 
 def merge_sentiment(daily_metrics, sentiment_df):
-    merged = daily_metrics.merge(sentiment_df, on='Date', how='left')
-    return merged
+    return merge_sentiment_impl(daily_metrics, sentiment_df)
+
 
 def sentiment_comparison(df):
+    return sentiment_comparison_impl(df)
 
-    summary = df.groupby('Classification').agg(
-        avg_pnl=('daily_pnl', 'mean'),
-        win_rate=('win_day', 'mean'),
-        avg_leverage=('avg_leverage', 'mean'),
-        avg_trade_count=('trade_count', 'mean')
-    )
 
-    return summary
+def segment_performance(df):
+    return segment_performance_impl(df)
+
+
+def daily_regime_timeseries(df):
+    return daily_regime_timeseries_impl(df)
