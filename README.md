@@ -1,49 +1,39 @@
 # Hyperliquid Trader Performance vs Market Sentiment (Fear/Greed Regime Study)
 
-This repository is structured as an interview-ready, reproducible submission for the **Trader Performance vs Market Sentiment** assignment.
+This repository is an interview-ready, reproducible submission for the **Trader Performance vs Market Sentiment** assignment.
 
 ## ✅ Requirement Coverage Checklist
 
 ### Part A — Data Preparation
 - [x] Dataset audit: rows, columns, dtypes, missing values, duplicates.
 - [x] Timestamp normalization for both sentiment and trades.
-- [x] Daily alignment by `Date` with merge diagnostics:
-  - unmatched trading days
-  - unmatched sentiment days
-  - alignment rate assertion
-- [x] Key daily metrics:
-  - Daily PnL, win-day, PnL volatility, drawdown proxy
-  - Trade count, avg size, avg leverage proxy, long/short ratio
-  - Leverage-adjusted PnL features
-- [x] Segmentation:
-  - High vs Low leverage
-  - Frequent vs Infrequent
-  - Consistent vs Inconsistent
+- [x] Daily alignment by `Date` with merge diagnostics (unmatched dates + alignment rate assertion).
+- [x] Key account-day metrics: PnL, win-day, volatility, drawdown proxy, trade count, avg size, leverage proxy, long/short ratio, leverage-adjusted metrics.
+- [x] Segmentation: leverage / frequency / consistency.
 
 ### Part B — Analysis
-- [x] Fear vs Greed performance comparison with summary table.
-- [x] Behavior shift analysis (trade frequency, leverage, size, long/short).
-- [x] Statistical significance via Mann–Whitney tests with p-values.
-- [x] Segment-level regime analysis tables.
-- [x] Charts saved for evidence.
+- [x] Fear vs Greed performance comparison.
+- [x] Behavior shifts (frequency, leverage, trade size, long/short).
+- [x] Statistical testing via Mann–Whitney U test + p-values.
+- [x] Segment-level regime analysis.
 
 ### Part C — Actionable Output
-- [x] Segment-aware strategy rules in `outputs/strategy_recommendations.md`.
-- [x] 1-page executive write-up in `outputs/executive_summary.md`.
+- [x] Segment-aware strategy rules.
+- [x] One-page executive summary.
 
 ### Bonus
-- [x] Predictive model (Random Forest) with feature-importance report.
-- [x] Lightweight Streamlit dashboard for exploration.
+- [x] Predictive model (Random Forest) + feature importance.
+- [x] Lightweight Streamlit dashboard.
 
 ---
 
 ## Repository Structure
 
-- `main.py` — end-to-end pipeline entrypoint.
-- `src/` — modular data science code.
-- `app/streamlit_app.py` — interactive dashboard.
-- `Data/` — input datasets.
-- `outputs/` — generated artifacts.
+- `main.py` — end-to-end pipeline orchestration (`run_pipeline`).
+- `src/` — modular analysis code.
+- `app/streamlit_app.py` — dashboard.
+- `Data/` — input data.
+- `outputs/` — generated artifacts (created locally/on deploy at runtime).
 
 ---
 
@@ -55,35 +45,23 @@ python main.py
 streamlit run app/streamlit_app.py
 ```
 
-> For Streamlit Cloud: set main file path to `app/streamlit_app.py`.
+### Streamlit Cloud
+Set app entrypoint to:
+
+`app/streamlit_app.py`
+
+The dashboard auto-generates required output tables on first run, so no pre-committed CSV artifacts are required.
 
 ---
 
-## Generated Outputs
+## Why merge conflicts are now reduced
 
-### Tables
-- `outputs/tables/account_day_merged.csv`
-- `outputs/tables/daily_regime_timeseries.csv`
-- `outputs/tables/sentiment_summary.csv`
-- `outputs/tables/statistical_tests.csv`
-- `outputs/tables/segment_performance.csv`
-- `outputs/tables/model_feature_importance.csv`
-- `outputs/tables/merge_report.json`
-- `outputs/tables/classification_report.txt`
-
-### Figures
-- `outputs/figures/pnl_by_sentiment.png`
-- `outputs/figures/behavior_shift.png`
-- `outputs/figures/segment_heatmap.png`
-
-### Writeups
-- `outputs/strategy_recommendations.md`
-- `outputs/executive_summary.md`
+Generated files under `outputs/` are intentionally **not version-controlled** anymore. This avoids repeated PR conflicts on machine-generated CSV/Markdown artifacts while preserving full reproducibility through `python main.py`.
 
 ---
 
 ## Notes / Limitations
 
-- The aligned trade window is short (few days), so findings are directional and should be re-tested on longer history.
-- Leverage uses a proxy estimate from available fields (not explicit exchange leverage).
-- Drawdown proxy is from cumulative daily realized PnL (not full equity curve mark-to-market).
+- The aligned trade window is short, so results are directional and should be re-validated on longer history.
+- Leverage is proxy-estimated from available fields.
+- Drawdown proxy uses cumulative realized daily PnL, not full mark-to-market equity curves.

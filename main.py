@@ -14,7 +14,7 @@ from src.preprocessing import preprocess_fear_greed, preprocess_trader_data
 from src.visualization import plot_behavior_shift, plot_pnl_by_sentiment, plot_segment_heatmap
 
 
-def _ensure_dirs():
+def ensure_dirs():
     for path in [OUTPUT_DIR, FIGURE_DIR, TABLE_DIR]:
         path.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +41,7 @@ def _save_actionable_rules(summary_df, segment_df, model_importances):
     (OUTPUT_DIR / "strategy_recommendations.md").write_text("\n\n".join(rules))
 
 
-def _save_executive_summary(summary_df, tests_df, merge_report):
+def _save_executive_summary(tests_df, merge_report):
     p_row = tests_df.loc[tests_df["metric"] == "daily_pnl"].iloc[0]
     lev_row = tests_df.loc[tests_df["metric"] == "avg_leverage"].iloc[0]
     trd_row = tests_df.loc[tests_df["metric"] == "trade_count"].iloc[0]
@@ -70,16 +70,17 @@ def _save_executive_summary(summary_df, tests_df, merge_report):
     (OUTPUT_DIR / "executive_summary.md").write_text(text)
 
 
-def run():
-    _ensure_dirs()
+def run_pipeline(verbose=True):
+    ensure_dirs()
 
     fg_raw = load_fear_greed(FEAR_GREED_PATH)
     trader_raw = load_trader_data(TRADER_DATA_PATH)
 
     fg_audit = dataset_audit(fg_raw, "Fear/Greed Raw")
     trader_audit = dataset_audit(trader_raw, "Trader Raw")
-    print_audit(fg_audit)
-    print_audit(trader_audit)
+    if verbose:
+        print_audit(fg_audit)
+        print_audit(trader_audit)
 
     fg = preprocess_fear_greed(fg_raw)
     trader = preprocess_trader_data(trader_raw)
@@ -110,13 +111,14 @@ def run():
     plot_segment_heatmap(segment_df, FIGURE_DIR / "segment_heatmap.png")
 
     _save_actionable_rules(summary, segment_df, model_importances)
-    _save_executive_summary(summary, stats_tests, merge_report)
+    _save_executive_summary(stats_tests, merge_report)
 
-    print("\nSentiment Summary:\n", summary)
-    print("\nStatistical Tests:\n", stats_tests)
-    print("\nMerge Report:\n", merge_report)
-    print("\nTop Model Features:\n", model_importances.head(5))
+    if verbose:
+        print("\nSentiment Summary:\n", summary)
+        print("\nStatistical Tests:\n", stats_tests)
+        print("\nMerge Report:\n", merge_report)
+        print("\nTop Model Features:\n", model_importances.head(5))
 
 
 if __name__ == "__main__":
-    run()
+    run_pipeline(verbose=True)

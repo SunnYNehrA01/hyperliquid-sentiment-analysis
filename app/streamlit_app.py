@@ -1,11 +1,19 @@
 from pathlib import Path
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import streamlit as st
 
+
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from main import run_pipeline
+
+
 TABLE_DIR = ROOT / "outputs" / "tables"
 
 sns.set_theme(style="whitegrid")
@@ -23,13 +31,26 @@ def load_data():
     return merged, summary, tests, segment, ts, feat_imp
 
 
+def ensure_outputs():
+    required = [
+        TABLE_DIR / "account_day_merged.csv",
+        TABLE_DIR / "sentiment_summary.csv",
+        TABLE_DIR / "statistical_tests.csv",
+        TABLE_DIR / "segment_performance.csv",
+        TABLE_DIR / "daily_regime_timeseries.csv",
+        TABLE_DIR / "model_feature_importance.csv",
+    ]
+    if all(path.exists() for path in required):
+        return
+    with st.spinner("Generating outputs (first run only)..."):
+        run_pipeline(verbose=False)
+    load_data.clear()
+
+
 st.title("Hyperliquid Trader Behavior vs Fear/Greed Regimes")
 st.caption("Interactive dashboard for assignment review: performance, behavior shifts, segment diagnostics, and model signals.")
 
-if not TABLE_DIR.exists() or not (TABLE_DIR / "account_day_merged.csv").exists():
-    st.error("Outputs not found. Run `python main.py` first to generate analysis tables.")
-    st.stop()
-
+ensure_outputs()
 merged, summary, tests, segment, ts, feat_imp = load_data()
 
 with st.sidebar:
