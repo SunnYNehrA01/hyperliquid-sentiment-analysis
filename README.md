@@ -1,39 +1,49 @@
-# Hyperliquid Trader Behavior vs Market Sentiment Analysis
+# Hyperliquid Trader Performance vs Market Sentiment (Fear/Greed Regime Study)
 
-## Objective
-Analyze how Bitcoin Fear/Greed sentiment influences trader behavior and performance on Hyperliquid.
+This repository is structured as an interview-ready, reproducible submission for the **Trader Performance vs Market Sentiment** assignment.
+
+## ✅ Requirement Coverage Checklist
+
+### Part A — Data Preparation
+- [x] Dataset audit: rows, columns, dtypes, missing values, duplicates.
+- [x] Timestamp normalization for both sentiment and trades.
+- [x] Daily alignment by `Date` with merge diagnostics:
+  - unmatched trading days
+  - unmatched sentiment days
+  - alignment rate assertion
+- [x] Key daily metrics:
+  - Daily PnL, win-day, PnL volatility, drawdown proxy
+  - Trade count, avg size, avg leverage proxy, long/short ratio
+  - Leverage-adjusted PnL features
+- [x] Segmentation:
+  - High vs Low leverage
+  - Frequent vs Infrequent
+  - Consistent vs Inconsistent
+
+### Part B — Analysis
+- [x] Fear vs Greed performance comparison with summary table.
+- [x] Behavior shift analysis (trade frequency, leverage, size, long/short).
+- [x] Statistical significance via Mann–Whitney tests with p-values.
+- [x] Segment-level regime analysis tables.
+- [x] Charts saved for evidence.
+
+### Part C — Actionable Output
+- [x] Segment-aware strategy rules in `outputs/strategy_recommendations.md`.
+- [x] 1-page executive write-up in `outputs/executive_summary.md`.
+
+### Bonus
+- [x] Predictive model (Random Forest) with feature-importance report.
+- [x] Lightweight Streamlit dashboard for exploration.
 
 ---
 
-## Methodology
+## Repository Structure
 
-1. Cleaned and aligned sentiment + trader datasets on daily level
-2. Engineered key metrics:
-   - Daily PnL per trader
-   - Win rate
-   - Trade frequency
-   - Leverage distribution
-   - Long/Short ratio
-3. Segmented traders:
-   - High vs Low Leverage
-   - Frequent vs Infrequent
-4. Compared performance across Fear vs Greed days
-5. Built simple predictive model (Random Forest)
-
----
-
-## Key Insights
-
-1. Traders use higher leverage during Greed days.
-2. Win rates vary significantly between Fear and Greed regimes.
-3. High-leverage traders show larger variance in PnL during Fear.
-
----
-
-## Strategy Recommendations
-
-1. Reduce leverage during Fear days for high-risk segment.
-2. Increase trade frequency selectively during Greed days.
+- `main.py` — end-to-end pipeline entrypoint.
+- `src/` — modular data science code.
+- `app/streamlit_app.py` — interactive dashboard.
+- `Data/` — input datasets.
+- `outputs/` — generated artifacts.
 
 ---
 
@@ -42,64 +52,38 @@ Analyze how Bitcoin Fear/Greed sentiment influences trader behavior and performa
 ```bash
 pip install -r requirements.txt
 python main.py
-Optional Dashboard
 streamlit run app/streamlit_app.py
+```
+
+> For Streamlit Cloud: set main file path to `app/streamlit_app.py`.
 
 ---
 
-# 🎯 What Makes This Strong
+## Generated Outputs
 
-This repo:
-- Modular architecture
-- Reproducible
-- Clean feature engineering
-- Segmentation logic
-- Predictive modeling
-- Visual outputs
-- Production structure
+### Tables
+- `outputs/tables/account_day_merged.csv`
+- `outputs/tables/daily_regime_timeseries.csv`
+- `outputs/tables/sentiment_summary.csv`
+- `outputs/tables/statistical_tests.csv`
+- `outputs/tables/segment_performance.csv`
+- `outputs/tables/model_feature_importance.csv`
+- `outputs/tables/merge_report.json`
+- `outputs/tables/classification_report.txt`
 
-This will score high on:
-✔ reasoning  
-✔ clarity  
-✔ reproducibility  
-✔ clean engineering  
+### Figures
+- `outputs/figures/pnl_by_sentiment.png`
+- `outputs/figures/behavior_shift.png`
+- `outputs/figures/segment_heatmap.png`
 
----
-
-# ⚡ Strategic Advice (Important)
-
-Since you are aiming for elite-level positioning:
-
-1. Push this as a polished quant-research repo.
-2. Add proper commit history.
-3. Add 1-page PDF summary.
-4. Mention “behavioral regime shift detection” in writeup.  
-   [Insight: Using sentiment as regime classifier is advanced framing.]
+### Writeups
+- `outputs/strategy_recommendations.md`
+- `outputs/executive_summary.md`
 
 ---
 
-# 🚀 Growth Radar for You
+## Notes / Limitations
 
-Since you're serious about AI + trading systems:
-
-- Start learning **quant research frameworks**
-- Study:
-  - Time-series regime detection
-  - Volatility clustering
-  - Risk-adjusted return metrics (Sharpe, Sortino)
-- Participate in:
-  - Numerai
-  - QuantConnect competitions
-- Prepare for:
-  - GSoC (ML orgs)
-  - Top MTech AI programs
-  - Research internships in financial ML
-
-If you want, I can now:
-- Generate the 1-page executive write-up (high impact)
-- Upgrade this to hedge-fund level quality
-- Add statistical testing (t-test, Mann–Whitney)
-- Add drawdown analysis
-- Add advanced clustering (KMeans archetypes)
-
-Tell me how elite you want this to look.
+- The aligned trade window is short (few days), so findings are directional and should be re-tested on longer history.
+- Leverage uses a proxy estimate from available fields (not explicit exchange leverage).
+- Drawdown proxy is from cumulative daily realized PnL (not full equity curve mark-to-market).
