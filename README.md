@@ -1,6 +1,6 @@
-# Hyperliquid Sentiment Regime Analysis
+# Hyperliquid Trader Performance vs Market Sentiment (Fear/Greed Regime Study)
 
-Assignment repo for analyzing trader behavior/performance under Fear vs Greed regimes, with a lightweight Streamlit dashboard.
+This project analyzes how **market sentiment regimes (Fear vs Greed)** influence trader behavior, risk-taking, and profitability dynamics on Hyperliquid.
 
 ## Run locally
 
@@ -12,18 +12,35 @@ streamlit run app/streamlit_app.py
 
 ## Streamlit Cloud
 
-Use `app/streamlit_app.py` as the app entrypoint.
+Use `app/streamlit_app.py` as the entrypoint.  
+The app auto-generates `outputs/tables/*` on first run via the same pipeline logic.
 
-The app auto-generates `outputs/tables/*` on first run using the same pipeline logic.
+## Conflict-safe structure (resolved)
 
-## Important merge-conflict note
+To avoid recurring merge conflicts in frequently-edited files:
 
-Generated files under `outputs/` are intentionally not tracked by git (`outputs/**` ignored, only `outputs/.gitkeep` kept). This avoids repeated merge conflicts in machine-generated artifacts.
+- `main.py` is a **thin entrypoint** that only calls pipeline orchestration.
+- `src/analysis.py` is a **thin API wrapper**.
+- Core logic lives in stable implementation modules:
+  - `src/pipeline.py`
+  - `src/analysis_core.py`
+
+Generated artifacts under `outputs/` are not tracked in git (`outputs/**` ignored, keeping `outputs/.gitkeep` only).
 
 ## Project layout
 
-- `main.py`: minimal CLI entrypoint
-- `src/pipeline.py`: orchestration logic
-- `src/analysis.py`: lightweight wrappers
-- `src/analysis_core.py`: analysis implementations
-- `app/streamlit_app.py`: dashboard
+- `main.py`: minimal CLI runner.
+- `src/pipeline.py`: end-to-end orchestration.
+- `src/analysis.py`: compatibility wrappers.
+- `src/analysis_core.py`: analysis implementations.
+- `app/streamlit_app.py`: lightweight dashboard.
+
+## What the pipeline covers
+
+- Dataset audit (rows/cols/dtypes/missing/duplicates)
+- Timestamp parsing and daily alignment with merge diagnostics
+- Feature engineering (PnL, behavior, risk, drawdown proxy, segmentation)
+- Regime comparison + Mann–Whitney significance testing
+- Segment-level analysis
+- Predictive model + feature importances
+- Saved tables/figures + executive summary + strategy recommendations

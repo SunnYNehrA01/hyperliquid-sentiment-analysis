@@ -1,3 +1,9 @@
+"""Public analysis API.
+
+This module intentionally stays small and stable to reduce merge conflicts.
+Core implementations live in :mod:`src.analysis_core`.
+"""
+
 from src.analysis_core import (
     daily_regime_timeseries_impl,
     merge_sentiment_impl,

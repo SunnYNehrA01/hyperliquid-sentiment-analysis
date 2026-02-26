@@ -1,3 +1,5 @@
+"""CLI entrypoint for the Hyperliquid sentiment-regime analysis pipeline."""
+
 from src.pipeline import run_pipeline
 
 
