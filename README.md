@@ -63,6 +63,7 @@ Rules are generated in `outputs/strategy_recommendations.md` using observed regi
 
 ## How to Run
 
+## Run locally
 ```bash
 pip install -r requirements.txt
 python main.py
