@@ -80,9 +80,7 @@ st.subheader("2) Regime-level Behavior & Performance")
 col1, col2 = st.columns(2)
 
 fig1, ax1 = plt.subplots(figsize=(7, 4))
-sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax1)
-if ax1.get_legend() is not None:
-    ax1.get_legend().remove()
+sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax1, legend=False)
 ax1.set_title("Daily PnL Distribution by Sentiment")
 col1.pyplot(fig1)
 
@@ -123,7 +121,7 @@ ax5.set_title("Feature Importance (Win-Day Model)")
 st.pyplot(fig5)
 
 st.subheader("6) Statistical Tests")
-st.dataframe(tests.sort_values("p_value"), use_container_width=True)
+st.dataframe(tests.sort_values("p_value"), width="stretch")
 
 st.subheader("7) Sample Account-Day Panel")
 show_cols = [
@@ -140,4 +138,4 @@ show_cols = [
     "frequency_segment",
     "consistency_segment",
 ]
-st.dataframe(filtered[show_cols].head(account_limit), use_container_width=True)
+st.dataframe(filtered[show_cols].head(account_limit), width="stretch")
