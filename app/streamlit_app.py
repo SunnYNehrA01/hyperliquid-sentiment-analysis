@@ -31,7 +31,7 @@ def load_data():
     return merged, summary, tests, segment, ts, feat_imp
 
 
-def ensure_outputs():
+def outputs_are_current():
     required = [
         TABLE_DIR / "account_day_merged.csv",
         TABLE_DIR / "sentiment_summary.csv",
@@ -40,9 +40,25 @@ def ensure_outputs():
         TABLE_DIR / "daily_regime_timeseries.csv",
         TABLE_DIR / "model_feature_importance.csv",
     ]
-    if all(path.exists() for path in required):
+    if not all(path.exists() for path in required):
+        return False
+
+    try:
+        tests = pd.read_csv(TABLE_DIR / "statistical_tests.csv", nrows=5)
+        summary = pd.read_csv(TABLE_DIR / "sentiment_summary.csv")
+    except Exception:
+        return False
+
+    expected_test_cols = {"metric", "p_value", "pct_shift_greed_vs_fear"}
+    has_required_tests = expected_test_cols.issubset(set(tests.columns))
+    has_required_regimes = {"Fear", "Greed"}.issubset(set(summary.get("Classification", pd.Series(dtype=str))))
+    return has_required_tests and has_required_regimes
+
+
+def ensure_outputs():
+    if outputs_are_current():
         return
-    with st.spinner("Generating outputs (first run only)..."):
+    with st.spinner("Generating or refreshing outputs..."):
         run_pipeline(verbose=False)
     load_data.clear()
 
@@ -66,10 +82,10 @@ filtered = merged[merged["Classification"].isin(sentiment_choice)].copy()
 
 st.subheader("1) KPI Snapshot")
 row1 = st.columns(4)
-fear_pnl = summary.loc[summary["Classification"] == "Fear", "avg_daily_pnl"].iloc[0]
-greed_pnl = summary.loc[summary["Classification"] == "Greed", "avg_daily_pnl"].iloc[0]
-lev_shift = tests.loc[tests["metric"] == "avg_leverage", "pct_shift_greed_vs_fear"].iloc[0]
-pnl_p = tests.loc[tests["metric"] == "daily_pnl", "p_value"].iloc[0]
+fear_pnl = summary.loc[summary["Classification"] == "Fear", "avg_daily_pnl"].iloc[0] if (summary["Classification"] == "Fear").any() else float("nan")
+greed_pnl = summary.loc[summary["Classification"] == "Greed", "avg_daily_pnl"].iloc[0] if (summary["Classification"] == "Greed").any() else float("nan")
+lev_shift = tests.loc[tests["metric"] == "avg_leverage", "pct_shift_greed_vs_fear"].iloc[0] if "pct_shift_greed_vs_fear" in tests.columns else float("nan")
+pnl_p = tests.loc[tests["metric"] == "daily_pnl", "p_value"].iloc[0] if (tests["metric"] == "daily_pnl").any() else float("nan")
 
 row1[0].metric("Avg PnL (Fear)", f"{fear_pnl:,.0f}")
 row1[1].metric("Avg PnL (Greed)", f"{greed_pnl:,.0f}", delta=f"{((greed_pnl-fear_pnl)/(abs(fear_pnl)+1e-6))*100:.1f}%")
