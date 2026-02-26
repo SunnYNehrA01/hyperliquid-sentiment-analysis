@@ -16,6 +16,16 @@ from src.pipeline import run_pipeline
 
 TABLE_DIR = ROOT / "outputs" / "tables"
 
+CLASS_COLORS = {"Fear": "#d62728", "Greed": "#2ca02c", "Neutral": "#1f77b4"}
+
+
+def palette_for(values):
+    classes = [c for c in values if pd.notna(c)]
+    if not classes:
+        return CLASS_COLORS
+    return {c: CLASS_COLORS.get(c, "#7f7f7f") for c in classes}
+
+
 sns.set_theme(style="whitegrid")
 st.set_page_config(page_title="Hyperliquid Sentiment Regime Dashboard", page_icon="📊", layout="wide")
 
@@ -31,7 +41,7 @@ def load_data():
     return merged, summary, tests, segment, ts, feat_imp
 
 
-def ensure_outputs():
+def outputs_are_current():
     required = [
         TABLE_DIR / "account_day_merged.csv",
         TABLE_DIR / "sentiment_summary.csv",
@@ -40,9 +50,25 @@ def ensure_outputs():
         TABLE_DIR / "daily_regime_timeseries.csv",
         TABLE_DIR / "model_feature_importance.csv",
     ]
-    if all(path.exists() for path in required):
+    if not all(path.exists() for path in required):
+        return False
+
+    try:
+        tests = pd.read_csv(TABLE_DIR / "statistical_tests.csv", nrows=5)
+        summary = pd.read_csv(TABLE_DIR / "sentiment_summary.csv")
+    except Exception:
+        return False
+
+    expected_test_cols = {"metric", "p_value", "pct_shift_greed_vs_fear"}
+    has_required_tests = expected_test_cols.issubset(set(tests.columns))
+    has_required_regimes = {"Fear", "Greed"}.issubset(set(summary.get("Classification", pd.Series(dtype=str))))
+    return has_required_tests and has_required_regimes
+
+
+def ensure_outputs():
+    if outputs_are_current():
         return
-    with st.spinner("Generating outputs (first run only)..."):
+    with st.spinner("Generating or refreshing outputs..."):
         run_pipeline(verbose=False)
     load_data.clear()
 
@@ -66,10 +92,10 @@ filtered = merged[merged["Classification"].isin(sentiment_choice)].copy()
 
 st.subheader("1) KPI Snapshot")
 row1 = st.columns(4)
-fear_pnl = summary.loc[summary["Classification"] == "Fear", "avg_daily_pnl"].iloc[0]
-greed_pnl = summary.loc[summary["Classification"] == "Greed", "avg_daily_pnl"].iloc[0]
-lev_shift = tests.loc[tests["metric"] == "avg_leverage", "pct_shift_greed_vs_fear"].iloc[0]
-pnl_p = tests.loc[tests["metric"] == "daily_pnl", "p_value"].iloc[0]
+fear_pnl = summary.loc[summary["Classification"] == "Fear", "avg_daily_pnl"].iloc[0] if (summary["Classification"] == "Fear").any() else float("nan")
+greed_pnl = summary.loc[summary["Classification"] == "Greed", "avg_daily_pnl"].iloc[0] if (summary["Classification"] == "Greed").any() else float("nan")
+lev_shift = tests.loc[tests["metric"] == "avg_leverage", "pct_shift_greed_vs_fear"].iloc[0] if "pct_shift_greed_vs_fear" in tests.columns else float("nan")
+pnl_p = tests.loc[tests["metric"] == "daily_pnl", "p_value"].iloc[0] if (tests["metric"] == "daily_pnl").any() else float("nan")
 
 row1[0].metric("Avg PnL (Fear)", f"{fear_pnl:,.0f}")
 row1[1].metric("Avg PnL (Greed)", f"{greed_pnl:,.0f}", delta=f"{((greed_pnl-fear_pnl)/(abs(fear_pnl)+1e-6))*100:.1f}%")
@@ -80,7 +106,7 @@ st.subheader("2) Regime-level Behavior & Performance")
 col1, col2 = st.columns(2)
 
 fig1, ax1 = plt.subplots(figsize=(7, 4))
-sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax1, legend=False)
+sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette=palette_for(filtered["Classification"].unique().tolist()), ax=ax1, legend=False)
 ax1.set_title("Daily PnL Distribution by Sentiment")
 col1.pyplot(fig1)
 
@@ -91,7 +117,7 @@ behavior_df = (
     .melt(id_vars="Classification", var_name="metric", value_name="value")
 )
 fig2, ax2 = plt.subplots(figsize=(7, 4))
-sns.barplot(data=behavior_df, x="metric", y="value", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax2)
+sns.barplot(data=behavior_df, x="metric", y="value", hue="Classification", palette=palette_for(behavior_df["Classification"].unique().tolist()), ax=ax2)
 ax2.set_title("Behavior Shifts by Sentiment")
 ax2.tick_params(axis="x", rotation=20)
 col2.pyplot(fig2)
@@ -100,7 +126,7 @@ st.subheader("3) Time-Series Regime Lens")
 metric_ts = st.selectbox("Select metric", ["total_pnl", "avg_win_rate", "avg_leverage", "active_accounts", "total_trades"])
 ts_plot = ts[ts["Classification"].isin(sentiment_choice)].copy()
 fig3, ax3 = plt.subplots(figsize=(12, 4))
-sns.lineplot(data=ts_plot, x="Date", y=metric_ts, hue="Classification", marker="o", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax3)
+sns.lineplot(data=ts_plot, x="Date", y=metric_ts, hue="Classification", marker="o", palette=palette_for(ts_plot["Classification"].unique().tolist()), ax=ax3)
 ax3.set_title(f"{metric_ts} over time")
 st.pyplot(fig3)
 
@@ -109,7 +135,7 @@ segment_type = st.selectbox("Segment Type", ["leverage_segment", "frequency_segm
 seg_df = segment[segment["segment_type"] == segment_type].copy()
 id_col = [c for c in seg_df.columns if c.endswith("segment") and c != "segment_type"][0]
 fig4, ax4 = plt.subplots(figsize=(9, 4))
-sns.barplot(data=seg_df, x=id_col, y="avg_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax4)
+sns.barplot(data=seg_df, x=id_col, y="avg_pnl", hue="Classification", palette=palette_for(seg_df["Classification"].unique().tolist()), ax=ax4)
 ax4.set_title(f"Average PnL by {segment_type}")
 st.pyplot(fig4)
 
