@@ -16,6 +16,16 @@ from src.pipeline import run_pipeline
 
 TABLE_DIR = ROOT / "outputs" / "tables"
 
+CLASS_COLORS = {"Fear": "#d62728", "Greed": "#2ca02c", "Neutral": "#1f77b4"}
+
+
+def palette_for(values):
+    classes = [c for c in values if pd.notna(c)]
+    if not classes:
+        return CLASS_COLORS
+    return {c: CLASS_COLORS.get(c, "#7f7f7f") for c in classes}
+
+
 sns.set_theme(style="whitegrid")
 st.set_page_config(page_title="Hyperliquid Sentiment Regime Dashboard", page_icon="📊", layout="wide")
 
@@ -96,7 +106,7 @@ st.subheader("2) Regime-level Behavior & Performance")
 col1, col2 = st.columns(2)
 
 fig1, ax1 = plt.subplots(figsize=(7, 4))
-sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax1, legend=False)
+sns.boxplot(data=filtered, x="Classification", y="daily_pnl", hue="Classification", palette=palette_for(filtered["Classification"].unique().tolist()), ax=ax1, legend=False)
 ax1.set_title("Daily PnL Distribution by Sentiment")
 col1.pyplot(fig1)
 
@@ -107,7 +117,7 @@ behavior_df = (
     .melt(id_vars="Classification", var_name="metric", value_name="value")
 )
 fig2, ax2 = plt.subplots(figsize=(7, 4))
-sns.barplot(data=behavior_df, x="metric", y="value", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax2)
+sns.barplot(data=behavior_df, x="metric", y="value", hue="Classification", palette=palette_for(behavior_df["Classification"].unique().tolist()), ax=ax2)
 ax2.set_title("Behavior Shifts by Sentiment")
 ax2.tick_params(axis="x", rotation=20)
 col2.pyplot(fig2)
@@ -116,7 +126,7 @@ st.subheader("3) Time-Series Regime Lens")
 metric_ts = st.selectbox("Select metric", ["total_pnl", "avg_win_rate", "avg_leverage", "active_accounts", "total_trades"])
 ts_plot = ts[ts["Classification"].isin(sentiment_choice)].copy()
 fig3, ax3 = plt.subplots(figsize=(12, 4))
-sns.lineplot(data=ts_plot, x="Date", y=metric_ts, hue="Classification", marker="o", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax3)
+sns.lineplot(data=ts_plot, x="Date", y=metric_ts, hue="Classification", marker="o", palette=palette_for(ts_plot["Classification"].unique().tolist()), ax=ax3)
 ax3.set_title(f"{metric_ts} over time")
 st.pyplot(fig3)
 
@@ -125,7 +135,7 @@ segment_type = st.selectbox("Segment Type", ["leverage_segment", "frequency_segm
 seg_df = segment[segment["segment_type"] == segment_type].copy()
 id_col = [c for c in seg_df.columns if c.endswith("segment") and c != "segment_type"][0]
 fig4, ax4 = plt.subplots(figsize=(9, 4))
-sns.barplot(data=seg_df, x=id_col, y="avg_pnl", hue="Classification", palette={"Fear": "#d62728", "Greed": "#2ca02c"}, ax=ax4)
+sns.barplot(data=seg_df, x=id_col, y="avg_pnl", hue="Classification", palette=palette_for(seg_df["Classification"].unique().tolist()), ax=ax4)
 ax4.set_title(f"Average PnL by {segment_type}")
 st.pyplot(fig4)
 
